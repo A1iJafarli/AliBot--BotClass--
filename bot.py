@@ -2,83 +2,114 @@ import discord
 from discord.ext import commands
 from ayarlar import ayarlar
 from botfunction import *
+import requests
+import os
+import random
 
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
 
-bot = commands.Bot(command_prefix='', intents=intents)
+bot = commands.Bot(command_prefix='a!', intents=intents)
+
+images_path = os.path.join(os.path.dirname(__file__), "images")
+os.listdir(images_path)
 
 @bot.event
 async def on_ready():
-    print(f'{bot.user} olarak giriş yapıldı. (ID: {bot.user.id})')
+    print(f'{bot.user} olarak giriş yapıldı.')
     print('-------------------')
 
 @bot.command()
 async def merhaba(ctx):
-    """Merhaba komutu."""
     await ctx.send("Selam!")
 
 @bot.command()
-async def bye(ctx, message):
-    """Bye komutu."""
-    await ctx.send(f"Güle güle {message.author.name}!")
+async def bye(ctx):
+    await ctx.send(f"Güle güle {ctx.author.name}!")
 
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
-
     if message.content.lower() == "sa":
         await message.channel.send(f"Aleyküm selam {message.author.name}!")
-
+    if message.content.lower() == "bye":
+        await message.channel.send(f"Güle güle {message.author.name}!")
     await bot.process_commands(message)
 
 @bot.command()
-async def joined(ctx, member: discord.Member):
-    """Üye katılım tarihini gösterir."""
-    await ctx.send(f'{member.name} {discord.utils.format_dt(member.joined_at)} tarihinde sunucuya katıldı.')
-
-@bot.command()
 async def ms(ctx):
-    """Botun gecikmesini gösterir."""
     gecikme = round(bot.latency * 1000)
     await ctx.send(f'Gecikme: {gecikme} ms')
 
 @bot.command()
 async def gecikme(ctx):
-    """Botun gecikmesini gösterir."""
     gecikme = round(bot.latency * 1000)
     await ctx.send(f'Gecikme: {gecikme} ms')
 
 @bot.command()
-@commands.has_permissions(manage_messages=True)
-async def temizle(ctx, miktar: int):
-    """Belirtilen miktarda mesajı siler."""
-    if miktar < 1 or miktar > 100:
-        await ctx.send("Lütfen 1 ile 100 arasında bir sayı girin.")
-        return
-    await ctx.channel.purge(limit=miktar + 1)
-    await ctx.send(f"{miktar} mesaj silindi.", delete_after=5)
+async def yazitura(ctx):
+    sonuc = yazi_tura()
+    await ctx.send(sonuc)
+
+def get_duck_image_url():
+    url = 'https://random-d.uk/api/random'
+    res = requests.get(url)
+    data = res.json()
+    return data['url']
+
+def get_fox_image_url():
+    url = 'https://randomfox.ca/floof/'
+    res = requests.get(url)
+    data = res.json()
+    return data['image']
+
+def get_dog_image_url():
+    url = 'https://random.dog/woof.json'
+    res = requests.get(url)
+    data = res.json()
+    return data['url']
 
 @bot.command()
-async def yazi_tura(ctx):
-    """Yazı tura atar."""
-    sonuc = yazi_tura()
-    await ctx.send(f"Sonuç: {sonuc}")
+async def duck(ctx):
+    url = get_duck_image_url()
+    await ctx.send(url)
+
+@bot.command()
+async def dog(ctx):
+    url = get_dog_image_url()
+    await ctx.send(url)
+
+@bot.command()
+async def fox(ctx):
+    url = get_fox_image_url()
+    await ctx.send(url)
+
+@bot.command()
+async def mem(ctx):
+    img_name = random.choice(os.listdir(images_path))
+    with open(os.path.join(images_path, img_name), 'rb') as f:
+        picture = discord.File(f)
+        await ctx.send(file=picture)
+    print(f'{ctx.author} tarafından MEM komutu kullanıldı.')
 
 @bot.command()
 async def yardım(ctx):
-    """Yardım komutu."""
     yardim_mesaji = (
         "Kullanılabilir komutlar:\n"
-        "!merhaba - Merhaba mesajı gönderir.\n"
-        "!bye - Güle güle mesajı gönderir.\n"
-        "!sa - Aleyküm selam mesajı gönderir.\n"
-        "!joined <üye> - Üyenin katılım tarihini gösterir.\n"
-        "!ms - Botun gecikmesini gösterir.\n"
-        "!gecikme - Botun gecikmesini gösterir.\n"
-        "!temizle <miktar> - Belirtilen miktarda mesajı siler (1-100).\n"
-        "!yazi_tura - Yazı tura atar."
+        "a!merhaba\n"
+        "bye\n"
+        "sa\n"
+        "a!ms\n"
+        "a!gecikme\n"
+        "a!yazitura\n"
+        "a!duck\n"
+        "a!mem\n"
+        "a!dog\n"
+        "a!fox\n"
+        "a!yardım"
     )
     await ctx.send(yardim_mesaji)
+
+bot.run(ayarlar["TOKEN"])
